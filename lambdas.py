@@ -37,6 +37,7 @@ class Lambda:
 
         else:
             raise NotImplementedError("currying not implemented")
+            # todo: this doesnt work. also need to consider currying a Lambda
             # return Lambda(partial(self.func, **vars))
 
     @staticmethod
@@ -58,245 +59,89 @@ class Lambda:
         defaults = dict(self.defaults, **other.defaults)
         return vars, defaults
 
-    def __add__(self, other):
+    def _unop(self, unop):
+        return Lambda(lambda **kwargs: unop(self(**kwargs)), self.vars, self.defaults)
+
+    def _binop(self, other, binop):
         if callable(other):
             vars, defaults = self._merge_vars_defaults(other)
             return Lambda(
-                lambda **kwargs: self(**kwargs) + other(**kwargs), vars, defaults
+                lambda **kwargs: binop(self(**kwargs), other(**kwargs)), vars, defaults
             )
 
         else:
             return Lambda(
-                lambda **kwargs: self(**kwargs) + other, self.vars, self.defaults
-            )
-
-    def __sub__(self, other):
-        if callable(other):
-            vars, defaults = self._merge_vars_defaults(other)
-            return Lambda(
-                lambda **kwargs: self(**kwargs) - other(**kwargs), vars, defaults
-            )
-
-        else:
-            return Lambda(
-                lambda **kwargs: self(**kwargs) - other, self.vars, self.defaults
-            )
-
-    def __mul__(self, other):
-        if callable(other):
-            vars, defaults = self._merge_vars_defaults(other)
-            return Lambda(
-                lambda **kwargs: self(**kwargs) * other(**kwargs), vars, defaults
-            )
-
-        else:
-            return Lambda(
-                lambda **kwargs: self(**kwargs) * other, self.vars, self.defaults
-            )
-
-    def __truediv__(self, other):
-        if callable(other):
-            vars, defaults = self._merge_vars_defaults(other)
-            return Lambda(
-                lambda **kwargs: self(**kwargs) / other(**kwargs), vars, defaults
-            )
-
-        else:
-            return Lambda(
-                lambda **kwargs: self(**kwargs) / other, self.vars, self.defaults
-            )
-
-    def __floordiv__(self, other):
-        if callable(other):
-            vars, defaults = self._merge_vars_defaults(other)
-            return Lambda(
-                lambda **kwargs: self(**kwargs) // other(**kwargs), vars, defaults
-            )
-
-        else:
-            return Lambda(
-                lambda **kwargs: self(**kwargs) // other, self.vars, self.defaults
-            )
-
-    def __mod__(self, other):
-        if callable(other):
-            vars, defaults = self._merge_vars_defaults(other)
-            return Lambda(
-                lambda **kwargs: self(**kwargs) % other(**kwargs), vars, defaults
-            )
-
-        else:
-            return Lambda(
-                lambda **kwargs: self(**kwargs) % other, self.vars, self.defaults
-            )
-
-    def __pow__(self, other):
-        if callable(other):
-            vars, defaults = self._merge_vars_defaults(other)
-            return Lambda(
-                lambda **kwargs: self(**kwargs) ** other(**kwargs), vars, defaults
-            )
-
-        else:
-            return Lambda(
-                lambda **kwargs: self(**kwargs) ** other, self.vars, self.defaults
-            )
-
-    def __matmul__(self, other):
-        if callable(other):
-            vars, defaults = self._merge_vars_defaults(other)
-            return Lambda(
-                lambda **kwargs: self(**kwargs) @ other(**kwargs), vars, defaults
-            )
-
-        else:
-            return Lambda(
-                lambda **kwargs: self(**kwargs) @ other, self.vars, self.defaults
-            )
-
-    def __and__(self, other):
-        if callable(other):
-            vars, defaults = self._merge_vars_defaults(other)
-            return Lambda(
-                lambda **kwargs: self(**kwargs) & other(**kwargs), vars, defaults
-            )
-
-        else:
-            return Lambda(
-                lambda **kwargs: self(**kwargs) & other, self.vars, self.defaults
-            )
-
-    def __or__(self, other):
-        if callable(other):
-            vars, defaults = self._merge_vars_defaults(other)
-            return Lambda(
-                lambda **kwargs: self(**kwargs) | other(**kwargs), vars, defaults
-            )
-
-        else:
-            return Lambda(
-                lambda **kwargs: self(**kwargs) | other, self.vars, self.defaults
-            )
-
-    def __xor__(self, other):
-        if callable(other):
-            vars, defaults = self._merge_vars_defaults(other)
-            return Lambda(
-                lambda **kwargs: self(**kwargs) ^ other(**kwargs), vars, defaults
-            )
-
-        else:
-            return Lambda(
-                lambda **kwargs: self(**kwargs) ^ other, self.vars, self.defaults
-            )
-
-    def __lshift__(self, other):
-        if callable(other):
-            vars, defaults = self._merge_vars_defaults(other)
-            return Lambda(
-                lambda **kwargs: self(**kwargs) << other(**kwargs), vars, defaults
-            )
-
-        else:
-            return Lambda(
-                lambda **kwargs: self(**kwargs) << other, self.vars, self.defaults
-            )
-
-    def __rshift__(self, other):
-        if callable(other):
-            vars, defaults = self._merge_vars_defaults(other)
-            return Lambda(
-                lambda **kwargs: self(**kwargs) >> other(**kwargs), vars, defaults
-            )
-
-        else:
-            return Lambda(
-                lambda **kwargs: self(**kwargs) >> other, self.vars, self.defaults
-            )
-
-    def __eq__(self, other):
-        if callable(other):
-            vars, defaults = self._merge_vars_defaults(other)
-            return Lambda(
-                lambda **kwargs: self(**kwargs) == other(**kwargs), vars, defaults
-            )
-
-        else:
-            return Lambda(
-                lambda **kwargs: self(**kwargs) == other, self.vars, self.defaults
-            )
-
-    def __ne__(self, other):
-        if callable(other):
-            vars, defaults = self._merge_vars_defaults(other)
-            return Lambda(
-                lambda **kwargs: self(**kwargs) != other(**kwargs), vars, defaults
-            )
-
-        else:
-            return Lambda(
-                lambda **kwargs: self(**kwargs) != other, self.vars, self.defaults
-            )
-
-    def __lt__(self, other):
-        if callable(other):
-            vars, defaults = self._merge_vars_defaults(other)
-            return Lambda(
-                lambda **kwargs: self(**kwargs) < other(**kwargs), vars, defaults
-            )
-
-        else:
-            return Lambda(
-                lambda **kwargs: self(**kwargs) < other, self.vars, self.defaults
-            )
-
-    def __le__(self, other):
-        if callable(other):
-            vars, defaults = self._merge_vars_defaults(other)
-            return Lambda(
-                lambda **kwargs: self(**kwargs) <= other(**kwargs), vars, defaults
-            )
-
-        else:
-            return Lambda(
-                lambda **kwargs: self(**kwargs) <= other, self.vars, self.defaults
-            )
-
-    def __gt__(self, other):
-        if callable(other):
-            vars, defaults = self._merge_vars_defaults(other)
-            return Lambda(
-                lambda **kwargs: self(**kwargs) > other(**kwargs), vars, defaults
-            )
-
-        else:
-            return Lambda(
-                lambda **kwargs: self(**kwargs) > other, self.vars, self.defaults
-            )
-
-    def __ge__(self, other):
-        if callable(other):
-            vars, defaults = self._merge_vars_defaults(other)
-            return Lambda(
-                lambda **kwargs: self(**kwargs) >= other(**kwargs), vars, defaults
-            )
-
-        else:
-            return Lambda(
-                lambda **kwargs: self(**kwargs) >= other, self.vars, self.defaults
+                lambda **kwargs: binop(self(**kwargs), other), self.vars, self.defaults
             )
 
     def __pos__(self):
-        return Lambda(lambda **kwargs: +self(**kwargs), self.vars, self.defaults)
+        return self._unop(lambda x: +x)
 
     def __neg__(self):
-        return Lambda(lambda **kwargs: -self(**kwargs), self.vars, self.defaults)
+        return self._unop(lambda x: -x)
 
     def __invert__(self):
-        return Lambda(lambda **kwargs: ~self(**kwargs), self.vars, self.defaults)
+        return self._unop(lambda x: ~x)
 
     def __abs__(self):
-        return Lambda(lambda **kwargs: abs(self(**kwargs)), self.vars, self.defaults)
+        return self._unop(abs)
+
+    def __add__(self, other):
+        return self._binop(other, lambda x, y: x + y)
+
+    def __sub__(self, other):
+        return self._binop(other, lambda x, y: x - y)
+
+    def __mul__(self, other):
+        return self._binop(other, lambda x, y: x * y)
+
+    def __truediv__(self, other):
+        return self._binop(other, lambda x, y: x / y)
+
+    def __floordiv__(self, other):
+        return self._binop(other, lambda x, y: x // y)
+
+    def __mod__(self, other):
+        return self._binop(other, lambda x, y: x % y)
+
+    def __pow__(self, other):
+        return self._binop(other, lambda x, y: x**y)
+
+    def __matmul__(self, other):
+        return self._binop(other, lambda x, y: x @ y)
+
+    def __and__(self, other):
+        return self._binop(other, lambda x, y: x & y)
+
+    def __or__(self, other):
+        return self._binop(other, lambda x, y: x | y)
+
+    def __xor__(self, other):
+        return self._binop(other, lambda x, y: x ^ y)
+
+    def __lshift__(self, other):
+        return self._binop(other, lambda x, y: x << y)
+
+    def __rshift__(self, other):
+        return self._binop(other, lambda x, y: x >> y)
+
+    def __eq__(self, other):
+        return self._binop(other, lambda x, y: x == y)
+
+    def __ne__(self, other):
+        return self._binop(other, lambda x, y: x != y)
+
+    def __lt__(self, other):
+        return self._binop(other, lambda x, y: x < y)
+
+    def __le__(self, other):
+        return self._binop(other, lambda x, y: x <= y)
+
+    def __gt__(self, other):
+        return self._binop(other, lambda x, y: x > y)
+
+    def __ge__(self, other):
+        return self._binop(other, lambda x, y: x >= y)
 
 
 Lx = Lambda(lambda x: x)
