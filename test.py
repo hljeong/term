@@ -5,7 +5,9 @@ from rich.console import Console
 from rich.columns import Columns
 from threading import Lock, Thread
 from time import monotonic, sleep
-from typing import Callable, Generic, TypeVar
+from typing import Callable, Generic, TypeVar, cast
+
+from lambdas import L
 
 T = TypeVar("T")
 
@@ -73,30 +75,62 @@ def timer():
     yield lambda: monotonic() - t_start
 
 
-d = {c: 0.0 for c in "abcdefghijklmnopqrstuvwxyz"}
+raw_data = {c: 0.0 for c in "abcdefghijklmnopqrstuvwxyz"}
 
 
 def f():
     with timer() as t:
-        while t() < 10:
-            for c in d:
-                d[c] += random() - 0.4
+        while t() < 30:
+            for c in raw_data:
+                raw_data[c] += random() - 0.45
             sleep(0.1)
 
 
 cons = Console()
 
+tracked = ["a", "e", "i", "o", "u"]
+data = {c: (lambda c_: Buffered(lambda: raw_data[c_]))(c) for c in tracked}
+
+
+def colored(s, color="black"):
+    return f"[{color}]{s}[/{color}]"
+
+
+class ForTheLackOfANameAltogether:
+    def __init__(self, description, condition):
+        self.description = description
+        self.condition = condition
+
+    def __rich__(self):
+        description = (
+            self.description() if callable(self.description) else self.description
+        )
+        return colored(description, "green" if self.condition() else "red")
+
+
+things = []
+for c in tracked:
+    things.append(
+        ForTheLackOfANameAltogether(
+            (lambda c_: lambda: f"{c_} = {data[c_].getter():.2f} > 10")(c),
+            L(data[c].getter) > 10,
+        )
+    )
+
 
 def render():
     cons.clear()
-    for c in sorted(d, key=lambda c: -d[c])[: cons.height - 1]:
-        cons.print(f"[{'red' if d[c] < 10 else 'green'}]{c} {d[c]:.3f}")
+    for thing in things:
+        cons.print(thing)
+    # for c in tracked[: cons.height - 1]:
+    #     x = data[c].getter()
+    #     cons.print(f"[{'red' if x < 10 else 'green'}]{c} {x:.3f}")
 
 
-w = Watcher()
-for c in d:
-    w.watch((lambda c: lambda: d[c])(c), lambda _: None)
-w.start(0.1)
+# w = Watcher()
+# for c in tracked:
+#     w.watch((lambda c: lambda: d[c])(c), lambda _: None)
+# w.start(0.1)
 
 loop_in_bg(render, 0.1).start()
 

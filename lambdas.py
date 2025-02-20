@@ -144,6 +144,7 @@ class Lambda:
         return self._binop(other, lambda x, y: x >= y)
 
 
-Lx = Lambda(lambda x: x)
-Ly = Lambda(lambda y: y)
-Lz = Lambda(lambda z: z)
+L = Lambda
+Lx = L(lambda x: x)
+Ly = L(lambda y: y)
+Lz = L(lambda z: z)
