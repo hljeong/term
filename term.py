@@ -1,5 +1,7 @@
+from contextlib import contextmanager
 import os
 import sys
+from time import sleep
 
 D = os.get_terminal_size()
 H, W = D.lines, D.columns
@@ -40,33 +42,45 @@ def render(buf):
 w = sys.stdout.write
 f = sys.stdout.flush
 
+
+@contextmanager
+def new_buffer():
+    buffer = ChangeBuffer()
+    yield buffer
+    w(render(buffer))
+    f()
+
+
 RESET = "\x1b[0m"
 HIDE_CURSOR = "\x1b[?25l"
 SHOW_CURSOR = "\x1b[?25h"
 
-w(HIDE_CURSOR)
 
-# empty = ChangeBuffer()
-# for x in range(W):
-#     for y in range(H):
-#         empty[x, y] = " "
-# w(render(empty))
-for y in range(H - 1):
+def setup():
+    w(HIDE_CURSOR)
+    for y in range(H - 1):
+        w("\n")
+    f()
+
+
+def teardown():
+    w(SHOW_CURSOR)
     w("\n")
 
-delta = ChangeBuffer()
-for x in range(W):
-    for y in range(H):
-        delta[x, y] = "o" if (x + y) % 2 == 0 else "x"
-        # delta[x, y] = str(y)[0]
 
-w(render(delta))
-w(render(delta))
+@contextmanager
+def go():
+    setup()
+    try:
+        yield
+    finally:
+        teardown()
 
-from time import sleep
 
-sleep(1)
-
-w(SHOW_CURSOR)
-
-w("\n")
+with go():
+    for i in range(5):
+        with new_buffer() as b:
+            for x in range(W):
+                for y in range(H):
+                    b[x, y] = "o" if (x + y) % 2 == i % 2 else "x"
+        sleep(1)
