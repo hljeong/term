@@ -69,6 +69,12 @@ class Buffered:
         return self.value
 
 
+class Ref:
+    def __init__(self, value):
+        self.value = value
+        self.getter = lambda: self.value
+
+
 @contextmanager
 def timer():
     t_start = monotonic()
@@ -132,6 +138,6 @@ def render():
 #     w.watch((lambda c: lambda: d[c])(c), lambda _: None)
 # w.start(0.1)
 
-loop_in_bg(render, 0.1).start()
+# loop_in_bg(render, 0.1).start()
 
-f()
+# f()

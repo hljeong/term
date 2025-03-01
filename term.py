@@ -12,7 +12,40 @@ from time import sleep
 from typing import Iterator
 from operator import attrgetter
 
+from color import (
+    DARK_GRAY,
+    GREEN,
+    LIGHT_GRAY,
+    Color,
+    BLUE,
+    YELLOW,
+    LIGHT_BLUE,
+    WHITE,
+    BLACK,
+)
 from lambdas import Lx
+
+lorem = " ".join(
+    [
+        "lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+        "ut malesuada libero dui, non volutpat sapien sagittis vitae.",
+        "proin sodales laoreet orci, eu tincidunt nisi viverra ac.",
+        "donec consequat orci quis enim tristique vehicula.",
+        "fusce dignissim massa in mi pretium, non ornare turpis lobortis.",
+        "sed iaculis, turpis id sollicitudin vulputate, augue nunc elementum velit, a varius tortor nibh at ante.",
+        "in mattis, ante at congue venenatis, leo massa maximus lacus, et dignissim sapien orci sit amet tellus.",
+        "integer interdum posuere ex, et fermentum elit placerat eu.",
+        "vivamus nec nulla fringilla, dapibus tortor ac, egestas dui.",
+        "nullam non condimentum enim, in eleifend leo.",
+        "nam et bibendum nunc, vel rutrum sem.",
+        "mauris id sem est.",
+        "curabitur lacinia tempor nulla ut lobortis.",
+        "ut quam dui, vehicula et lacinia vitae, dignissim ac neque.",
+        "vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae;",
+        "sed et felis ut mauris consequat mollis quis ac lectus.",
+        "in in odio sodales justo vulputate sollicitudin ex.",
+    ]
+)
 
 D = os.get_terminal_size()
 H, W = D.lines, D.columns
@@ -54,59 +87,6 @@ class Vec:
 
     def __mod__(self, c: int) -> Vec:
         return Vec(self.x % c, self.y % c)
-
-
-class InvalidColorError(Exception):
-    pass
-
-
-@dataclass(frozen=True)
-class Color:
-    r: int
-    g: int
-    b: int
-
-    def __postinit__(self):
-        good = 0 <= Lx < 256
-        if not all(map(good, {self.r, self.g, self.b})):
-            raise InvalidColorError(str(self))
-
-    def __str__(self) -> str:
-        return f"Color(r={self.r}, g={self.g}, b={self.b})"
-
-    @property
-    def ansi_fg(self) -> str:
-        return f"\x1b[38;2;{self.r};{self.g};{self.b}m"
-
-    @property
-    def ansi_bg(self) -> str:
-        return f"\x1b[48;2;{self.r};{self.g};{self.b}m"
-
-    @staticmethod
-    def hex(color) -> Color:
-        r = int(color[1:3], 16)
-        g = int(color[3:5], 16)
-        b = int(color[5:7], 16)
-        return Color(r, g, b)
-
-    @staticmethod
-    def hsl(color):
-        raise NotImplementedError
-
-    @staticmethod
-    def coerce(color: Color | str) -> Color:
-        if isinstance(color, Color):
-            return color
-
-        if isinstance(color, str):
-            if color.startswith("#"):
-                return Color.hex(color)
-
-        raise InvalidColorError(repr(color))
-
-
-RED = Color(255, 0, 0)
-YELLOW = Color(255, 255, 0)
 
 
 def cursor_to(v: Vec) -> str:
@@ -163,6 +143,22 @@ class Rect:
     @cached_property
     def lim(self) -> Vec:
         return self.pos + self.dim
+
+    @cached_property
+    def tl(self) -> Vec:
+        return self.pos
+
+    @cached_property
+    def tr(self) -> Vec:
+        return self.pos + Vec(self.dim.x - 1, 0)
+
+    @cached_property
+    def bl(self) -> Vec:
+        return self.pos + Vec(0, self.dim.y - 1)
+
+    @cached_property
+    def br(self) -> Vec:
+        return self.pos + Vec(self.dim.x - 1, self.dim.y - 1)
 
     @staticmethod
     def from_lim(pos: Vec, lim: Vec) -> Rect:
@@ -341,9 +337,7 @@ class Block(Renderable):
             )
         )
         self.border: bool = border
-        self.title: Label = Label(
-            Rect(rect.pos + Vec(1, 0), rect.dim - Vec(2, 0)), title
-        )
+        self.title: Label = Label(Rect(rect.tl + Vec(1, 0), rect.tr - Vec(1, 0)), title)
 
     def add(self, renderable: Renderable):
         self.box.add(renderable)
@@ -439,21 +433,29 @@ with go():
     # buf = Buffer()
     # s = choices(string.ascii_lowercase, k=H * W)
     # for i in range(5000):
-    #     # buf.add(i * 6, 0, Span("lorem ipsum dolor sit amet", Span.Style(fg=YELLOW)))
+    #     # buf.add(
+    #     #     i * 6,
+    #     #     0,
+    #     #     Span(Vec(i * 6, 0), "lorem ipsum dolor sit amet", Span.Style(fg=YELLOW)),
+    #     # )
     #     for x in range(W):
     #         for y in range(H):
-    #             buf.add(x, y, Span(s[(x + y + i) % (H * W)]))
+    #             buf.add(
+    #                 x,
+    #                 y,
+    #                 Span(
+    #                     Vec(x, y),
+    #                     s[(x + y + i) % (H * W)],
+    #                     Span.Style(fg=GREEN, bg=DARK_GRAY),
+    #                 ),
+    #             )
     #     buf.draw()
-    # with new_buffer() as b:
-    #     for x in range(W):
-    #         for y in range(H):
-    #             b[x, y] = "o" if (x + y) % 2 == i % 2 else "x"
     # sleep(1)
 
     s = Screen()
-    b = Block(Rect(Vec(0, 0), Vec(20, 10)), title="hi")
+    b = Block(Rect(Vec(0, 0), Vec(20, 10)), title=lorem[:20])
     b.add(Label(Rect(Vec(0, 0), Vec(20, 1)), "first item"))
     b.add(Label(Rect(Vec(-3, 1), Vec(20, 1)), "second item"))
     b.add(Label(Rect(Vec(0, 2), Vec(20, 1)), "third item"))
     s.box.add(b)
-    s.draw()
+    # s.draw()
