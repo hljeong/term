@@ -29,58 +29,37 @@ class Loop:
     def unregister(self, func: Func):
         self.funcs = [f for f in self.funcs if f is not func]
 
-    def after_n_frames(self, func: Func, *, n: int):
-        run_at: int = self.state.frame_count + n
+    def after(self, func: Func, *, seconds: float):
+        if seconds <= 0:
+            raise ValueError(f"seconds must > 0, got: {seconds}")
+
+        when: float = monotonic() + seconds
 
         def wrapped():
-            if self.state.frame_count == run_at:
+            if monotonic() >= when:
                 func()
                 self.unregister(wrapped)
 
         self.register(wrapped)
 
-    def after_n_seconds(self, func: Func, *, n: float):
-        run_at: float = monotonic() + n
+    def interval(self, func: Func, *, seconds: float, after: float = 0):
+        if seconds <= 0:
+            raise ValueError(f"seconds must > 0, got: {seconds}")
+
+        when: float = monotonic() + after
 
         def wrapped():
-            if monotonic() >= run_at:
+            nonlocal when
+            now: float = monotonic()
+            if now >= when:
                 func()
-                self.unregister(wrapped)
-
-        self.register(wrapped)
-
-    def every_n_frames(self, func: Func, *, n: int, after: int = 0):
-        if n <= 0:
-            raise ValueError(f"n must > 0, got: {n}")
-
-        run_at: int = self.state.frame_count + after
-
-        def wrapped():
-            nonlocal run_at
-            if self.state.frame_count == run_at:
-                func()
-                run_at += n
-
-        self.register(wrapped)
-
-    def every_n_seconds(self, func: Func, *, n: float, after: float = 0):
-        if n <= 0:
-            raise ValueError(f"n must > 0, got: {n}")
-
-        run_at: float = monotonic() + after
-
-        def wrapped():
-            nonlocal run_at
-            current_time: float = monotonic()
-            if current_time >= run_at:
-                func()
-                while run_at <= current_time:
-                    run_at += n
+                while when <= now:
+                    when += seconds
 
         self.register(wrapped)
 
     def n_times_per_second(self, func: Func, *, n: int):
-        self.every_n_seconds(func, n=1 / n)
+        self.interval(func, seconds=1 / n)
 
     def dispatch(self):
         for func in self.funcs:

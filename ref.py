@@ -16,7 +16,7 @@ class Ref(Generic[T]):
 
     def apply(self, func: Callable[[T], U], *, interval=0.2) -> Ref[U]:
         ref: Ref[U] = Ref(func(self.value))
-        L.every_n_seconds(lambda: ref.set_value(func(self.value)), n=interval)
+        L.interval(lambda: ref.set_value(func(self.value)), seconds=interval)
         return ref
 
     @staticmethod
