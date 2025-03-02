@@ -93,34 +93,34 @@ class Border(Renderable):
         )
 
         self.spans: list[Span] = []
-        if self.box.dim.h == 1:
-            if self.box.dim.w == 1:
+        match self.box.dim:
+            case Dim(0, _) | Dim(_, 0):
+                pass
+
+            case Dim(1, 1):
                 self.spans.append(Span(Vec(0, 0), "·"))
 
-            elif self.box.dim.w > 1:
-                self.spans.append(Span(Vec(0, 0), "─" * self.box.dim.w))
+            case Dim(w, 1):
+                self.spans.append(Span(Vec(0, 0), "─" * w))
 
-        elif self.box.dim.h > 1:
-            if self.box.dim.w == 1:
-                for dy in range(self.box.dim.h):
+            case Dim(1, h):
+                for dy in range(h):
                     self.spans.append(Span(self.box.pos + Vec(0, dy), "│"))
 
-            else:
+            case Dim(w, h):
                 self.spans.append(
                     Span(
                         self.box.pos,
-                        "".join(["┌", "─" * (self.box.dim.w - 2), "┐"]),
+                        "".join(["┌", "─" * (w - 2), "┐"]),
                     )
                 )
-                for dy in range(1, self.box.dim.h - 1):
+                for dy in range(1, h - 1):
                     self.spans.append(Span(self.box.pos + Vec(0, dy), "│"))
-                    self.spans.append(
-                        Span(self.box.pos + Vec(self.box.dim.w - 1, dy), "│")
-                    )
+                    self.spans.append(Span(self.box.pos + Vec(w - 1, dy), "│"))
                 self.spans.append(
                     Span(
-                        self.box.pos + Vec(0, self.box.dim.h - 1),
-                        "".join(["└", "─" * (self.box.dim.w - 2), "┘"]),
+                        self.box.pos + Vec(0, h - 1),
+                        "".join(["└", "─" * (w - 2), "┘"]),
                     )
                 )
 
@@ -131,7 +131,7 @@ class Border(Renderable):
             yield span + Vec(1, 1)
 
 
-class Label(Renderable):
+class Text(Renderable):
     def __init__(self, text: str | Ref[str]):
         self.text: Ref[str] = Ref.of(text)
 
