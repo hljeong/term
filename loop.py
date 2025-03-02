@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import ceil
 from time import monotonic, sleep
-from types import FrameType
 from typing import Callable
 
 
@@ -12,7 +10,18 @@ Func = Callable[[], None]
 
 @dataclass
 class State:
-    frame_count: int = 0
+    f: int = 0
+    t_start_abs: float = 0
+    t_last_abs: float = 0
+    t_abs: float = 0
+
+    @property
+    def t_last(self) -> float:
+        return self.t_last_abs - self.t_start_abs
+
+    @property
+    def t(self) -> float:
+        return self.t_abs - self.t_start_abs
 
 
 class Loop:
@@ -62,12 +71,15 @@ class Loop:
         self.interval(func, seconds=1 / n)
 
     def dispatch(self):
+        self.state.t_abs = monotonic()
         for func in self.funcs:
             func()
-        self.state.frame_count += 1
+        self.state.f += 1
+        self.state.t_last_abs = self.state.t_abs
 
     def start(self):
-        next_frame_time: float = monotonic()
+        self.state.t_start_abs = monotonic()
+        next_frame_time: float = self.state.t_start_abs
         while not self.stopped:
             if self.max_fps is None:
                 self.dispatch()

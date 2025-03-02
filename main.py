@@ -1,5 +1,5 @@
 from loop import L
-from ref import Ref
+from ref import Ref, RefFunc
 from term import go, lorem
 from term2 import Label, Term
 
@@ -10,10 +10,8 @@ def main():
 
     t: Term = Term()
 
-    second: Ref[int] = Ref(0)
-    L.interval(lambda: second.set_value(second.value + 1), seconds=1, after=1)
-
-    label: Ref[str] = second.apply(str)
+    seconds: Ref[float] = Ref(getter=lambda: L.state.t)
+    label: Ref[str] = RefFunc(lambda seconds: format(seconds, ".2f"))(seconds)
     t.add(Label(label))
 
     label2: Ref[str] = Ref(lorem[:20])
