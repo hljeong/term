@@ -2,11 +2,14 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from color import Color
 from layout import Box, Dim, Direction
-from typing_extensions import Iterator, override
-from term import H, Vec, W, cursor_to, f, w
+from random import random
+from typing import Iterator
+from typing_extensions import override
 
 from ref import Ref
+from term import H, Vec, W, cursor_to, f, w
 
 
 @dataclass
@@ -24,9 +27,10 @@ class Renderable(ABC):
 class Span(Renderable):
     pos: Vec
     text: str
+    color: Color = Color.NONE
 
     def __add__(self, off: Vec) -> Span:
-        return Span(self.pos + off, self.text)
+        return Span(self.pos + off, self.text, self.color)
 
     @override
     def render(self, hints: RenderHints) -> Iterator[Span]:
@@ -80,7 +84,7 @@ class Term:
         for span in self.block.render(hints):
             for dx, ch in enumerate(span.text):
                 w(cursor_to(span.pos + Vec(dx, 0)))
-                w(ch)
+                w(f"{span.color.ansi_bg}{ch}\x1b[0m")
         f()
 
 
@@ -138,3 +142,14 @@ class Text(Renderable):
     @override
     def render(self, hints: RenderHints) -> Iterator[Span]:
         yield Span(Vec(0, 0), self.text.value)
+
+
+class Thing(Renderable):
+    def __init__(self, box: Box):
+        self.box: Box = box
+        self.color: Color = Color.hsl(random(), 1, 0.7)
+
+    @override
+    def render(self, hints: RenderHints) -> Iterator[Span]:
+        for dy in range(self.box.dim.h):
+            yield Span(Vec(0, dy), " " * self.box.dim.w, self.color)

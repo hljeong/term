@@ -12,17 +12,7 @@ from time import sleep
 from typing import Iterator
 from operator import attrgetter
 
-from color import (
-    DARK_GRAY,
-    GREEN,
-    LIGHT_GRAY,
-    Color,
-    BLUE,
-    YELLOW,
-    LIGHT_BLUE,
-    WHITE,
-    BLACK,
-)
+from color import Color
 from lambdas import Lx
 
 lorem = " ".join(

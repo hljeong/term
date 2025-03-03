@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import ClassVar
+from math import floor
+from typing import Callable, ClassVar
 
 
 class InvalidColorError(Exception):
@@ -20,7 +21,8 @@ class Color:
         ansi_fg: str
         ansi_bg: str
 
-    SYSTEM_COLOR: ClassVar[int] = 1
+    NO_COLOR: ClassVar[int] = 1
+    SYSTEM_COLOR: ClassVar[int] = 2
     SYSTEM_COLORS: ClassVar[list[SystemColor]] = [
         SystemColor("black", "\x1b[30m", "\x1b[40m"),
         SystemColor("red", "\x1b[31m", "\x1b[41m"),
@@ -62,6 +64,9 @@ class Color:
     @property
     def ansi_fg(self) -> str:
         match self.r, self.g, self.b:
+            case Color.NO_COLOR, _, _:
+                return ""
+
             case Color.SYSTEM_COLOR, c, _:
                 return Color.SYSTEM_COLORS[c].ansi_fg
 
@@ -71,6 +76,9 @@ class Color:
     @property
     def ansi_bg(self) -> str:
         match self.r, self.g, self.b:
+            case Color.NO_COLOR, _, _:
+                return ""
+
             case Color.SYSTEM_COLOR, c, _:
                 return Color.SYSTEM_COLORS[c].ansi_bg
 
@@ -94,9 +102,41 @@ class Color:
             raise ValueError(f"invalid hex color: {color!r}")
         return Color(r, g, b)
 
+    # see: https://gist.github.com/ciembor/1494530
     @staticmethod
     def hsl(h: float, s: float, l: float):
-        raise NotImplementedError
+        scale: Callable[[float], int] = lambda v: floor(v * 255)
+
+        if s == 0:
+            return Color(scale(l), scale(l), scale(l))
+
+        else:
+
+            def hue2rgb(p: float, q: float, t: float) -> int:
+                v: float
+
+                if t < 0:
+                    t += 1
+                if t > 1:
+                    t -= 1
+                if t < 1 / 6:
+                    v = p + (q - p) * 6 * t
+                elif t < 1 / 2:
+                    v = q
+                elif t < 2 / 3:
+                    v = p + (q - p) * (2 / 3 - t) * 6
+                else:
+                    v = p
+
+                return scale(v)
+
+            q: float = l * (1 + s) if l < 0.5 else l + s - l * s
+            p: float = 2 * l - q
+            return Color(
+                hue2rgb(p, q, h + 1 / 3),
+                hue2rgb(p, q, h),
+                hue2rgb(p, q, h - 1 / 3),
+            )
 
     @staticmethod
     def coerce(color: Color | str) -> Color:
@@ -109,20 +149,39 @@ class Color:
 
         raise InvalidColorError(repr(color))
 
+    NONE: ClassVar[Color] = ...  # type: ignore
+    BLACK: ClassVar[Color] = ...  # type: ignore
+    RED: ClassVar[Color] = ...  # type: ignore
+    GREEN: ClassVar[Color] = ...  # type: ignore
+    YELLOW: ClassVar[Color] = ...  # type: ignore
+    BLUE: ClassVar[Color] = ...  # type: ignore
+    MAGENTA: ClassVar[Color] = ...  # type: ignore
+    CYAN: ClassVar[Color] = ...  # type: ignore
+    LIGHT_GRAY: ClassVar[Color] = ...  # type: ignore
+    DARK_GRAY: ClassVar[Color] = ...  # type: ignore
+    LIGHT_RED: ClassVar[Color] = ...  # type: ignore
+    LIGHT_GREEN: ClassVar[Color] = ...  # type: ignore
+    LIGHT_YELLOW: ClassVar[Color] = ...  # type: ignore
+    LIGHT_BLUE: ClassVar[Color] = ...  # type: ignore
+    LIGHT_MAGENTA: ClassVar[Color] = ...  # type: ignore
+    LIGHT_CYAN: ClassVar[Color] = ...  # type: ignore
+    WHITE: ClassVar[Color] = ...  # type: ignore
 
-BLACK: Color = Color.system(0)
-RED: Color = Color.system(1)
-GREEN: Color = Color.system(2)
-YELLOW: Color = Color.system(3)
-BLUE: Color = Color.system(4)
-MAGENTA: Color = Color.system(5)
-CYAN: Color = Color.system(6)
-LIGHT_GRAY: Color = Color.system(7)
-DARK_GRAY: Color = Color.system(8)
-LIGHT_RED: Color = Color.system(9)
-LIGHT_GREEN: Color = Color.system(10)
-LIGHT_YELLOW: Color = Color.system(11)
-LIGHT_BLUE: Color = Color.system(12)
-LIGHT_MAGENTA: Color = Color.system(13)
-LIGHT_CYAN: Color = Color.system(14)
-WHITE: Color = Color.system(15)
+
+Color.NONE = Color(Color.NO_COLOR, -1, -1)
+Color.BLACK = Color.system(0)
+Color.RED = Color.system(1)
+Color.GREEN = Color.system(2)
+Color.YELLOW = Color.system(3)
+Color.BLUE = Color.system(4)
+Color.MAGENTA = Color.system(5)
+Color.CYAN = Color.system(6)
+Color.LIGHT_GRAY = Color.system(7)
+Color.DARK_GRAY = Color.system(8)
+Color.LIGHT_RED = Color.system(9)
+Color.LIGHT_GREEN = Color.system(10)
+Color.LIGHT_YELLOW = Color.system(11)
+Color.LIGHT_BLUE = Color.system(12)
+Color.LIGHT_MAGENTA = Color.system(13)
+Color.LIGHT_CYAN = Color.system(14)
+Color.WHITE = Color.system(15)

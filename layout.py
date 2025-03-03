@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Iterator
 
@@ -20,6 +20,30 @@ class Dim:
     def __post_init__(self):
         self.w = max(0, self.w)
         self.h = max(0, self.h)
+
+
+@dataclass
+class Padding:
+    top: int = 0
+    right: int = -1
+    bottom: int = -1
+    left: int = -1
+
+    def __post_init__(self):
+        if self.right < 0:
+            self.right = self.top
+
+        if self.bottom < 0:
+            self.bottom = self.top
+
+        if self.left < 0:
+            self.left = self.right
+
+
+@dataclass
+class Layout:
+    direction: Direction = Direction.HORIZONTAL
+    padding: Padding = field(default_factory=Padding)
 
 
 @dataclass
