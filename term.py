@@ -415,6 +415,8 @@ def go():
     setup()
     try:
         yield
+    except KeyboardInterrupt:
+        pass
     finally:
         teardown()
 

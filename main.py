@@ -1,9 +1,10 @@
 from random import random
 
+from layout import Padding
 from loop import L
 from ref import Ref, RefFunc
 from term import go, lorem
-from term2 import Block, Border, Color, Direction, Term, Text, Thing
+from term2 import Block, Border, Color, Dim, Direction, Term, Text, Thing
 
 
 def main():
@@ -27,15 +28,15 @@ def main():
     # L.interval(lambda: text2.set_value(text2.value[:-1]), seconds=1, after=1)
     # bottom.add(Text(text2))
 
-    left: Block
-    right: Block
-    left, right = t.block.split()
+    t.block.layout.direction = Direction.VERTICAL
+    t.block.layout.padding = Padding(1, 2)
+    t.block.layout.gap = 2
 
-    thing1: Thing = Thing(left.box)
-    left.add(thing1)
+    thing1: Thing = Thing(Dim(20, 10))
+    t.block.add(thing1)
 
-    thing2: Thing = Thing(right.box)
-    right.add(thing2)
+    thing2: Thing = Thing(Dim(10, 10))
+    t.block.add(thing2)
 
     # hue1: float = random()
     # hue2: float = random()
