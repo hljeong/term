@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from color import Color
 from layout import Box, Dim, Direction, Fixed, Layout, LayoutInfo, Sizing
 from random import random
-from typing import Iterator
+from types import TracebackType
+from typing import ContextManager, Iterator
 from typing_extensions import override
 
 from ref import Ref
@@ -18,6 +20,9 @@ class Renderable(ABC):
     def __init__(self):
         self.id: int = Renderable.NEXT_ID
         Renderable.NEXT_ID += 1
+
+    def add(self, thing: Renderable):
+        pass
 
     @abstractmethod
     def size(self, render_table: RenderTable):
@@ -73,12 +78,9 @@ class Block(Renderable):
         self.border: bool = border
         self.contents: list[Renderable] = list(contents)
 
+    @override
     def add(self, thing: Renderable):
         self.contents.append(thing)
-
-    def __iadd__(self, thing: Renderable) -> Block:
-        self.add(thing)
-        return self
 
     def __iter__(self) -> Iterator[Renderable]:
         yield from self.contents
@@ -137,12 +139,26 @@ class Block(Renderable):
 
 
 class Term:
-    def __init__(self):
-        self.layout: Layout = Layout(sizing=Sizing(Fixed(W), Fixed(H)))
-        self.block: Block = Block()
+    def __init__(self, *, layout: Layout | None = None, border=False):
+        self.block: Block = Block(layout=layout, border=border)
+
+        self._current: Renderable = self.block
+
+    # inspired by airium
+    def __call__(self, thing: Renderable) -> ContextManager[None]:
+        self._current.add(thing)
+
+        @contextmanager
+        def ctx() -> Iterator[None]:
+            last = self._current
+            self._current = thing
+            yield
+            self._current = last
+
+        return ctx()
 
     def add(self, thing: Renderable):
-        self.block += thing
+        self.block.add(thing)
 
     def render(self):
         w("\x1b[2J")
