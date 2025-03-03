@@ -15,10 +15,9 @@ from term import H, Vec, W, cursor_to, f, w
 class Renderable(ABC):
     NEXT_ID: int = 1
 
-    def __init__(self, layout: Layout | None = None):
+    def __init__(self):
         self.id: int = Renderable.NEXT_ID
         Renderable.NEXT_ID += 1
-        self.layout: Layout = layout or Layout()
 
     @abstractmethod
     def size(self, render_table: RenderTable):
@@ -55,35 +54,24 @@ class RenderTable:
         self.table[thing.id] = render_info
 
 
-class Span(Renderable):
-    def __init__(self, pos: Vec, text: str, color: Color = Color.NONE):
-        super().__init__()
-        self.pos: Vec = pos
-        self.text: str = text
-        self.color: Color = color
+@dataclass
+class Span:
+    pos: Vec
+    text: str
+    color: Color = Color.NONE
 
     def __add__(self, off: Vec) -> Span:
         return Span(self.pos + off, self.text, self.color)
 
-    @override
-    def size(self, render_table: RenderTable):
-        pass
-
-    @override
-    def place(self, render_table: RenderTable):
-        pass
-
-    @override
-    def render(self, render_table: RenderTable) -> Iterator[Span]:
-        yield self
-
 
 class Block(Renderable):
-    def __init__(self, layout: Layout | None = None):
-        super().__init__(layout)
-        # todo: delete?
-        self.color: Color = Color.hsl(random(), 1, 0.2)
-        self.contents: list[Renderable] = []
+    def __init__(
+        self, *contents: Renderable, layout: Layout | None = None, border=False
+    ):
+        super().__init__()
+        self.layout: Layout = layout or Layout()
+        self.border: bool = border
+        self.contents: list[Renderable] = list(contents)
 
     def add(self, thing: Renderable):
         self.contents.append(thing)
@@ -92,24 +80,56 @@ class Block(Renderable):
         self.add(thing)
         return self
 
-    # todo: ew
+    def __iter__(self) -> Iterator[Renderable]:
+        yield from self.contents
+
+    def __len__(self) -> int:
+        return len(self.contents)
+
     @override
     def size(self, render_table: RenderTable):
-        for thing in self.contents:
+        for thing in self:
             thing.size(render_table)
         render_table[self].dim = self.layout.size(self.contents, render_table)
 
+        if self.border:
+            render_table[self].dim.w += 2
+            render_table[self].dim.h += 2
+
     @override
     def place(self, render_table: RenderTable):
-        for thing in self.contents:
+        for thing in self:
             thing.place(render_table)
         self.layout.place(self.contents, render_table)
 
+        if self.border:
+            for thing in self:
+                render_table[thing].pos += Vec(1, 1)
+
     @override
     def render(self, render_table: RenderTable) -> Iterator[Span]:
-        render_info: RenderInfo = render_table[self]
-        for dy in range(render_info.dim.h):
-            yield Span(Vec(0, dy), " " * render_info.dim.w, self.color)
+        if self.border:
+            match render_table[self].dim:
+                case Dim(0, _) | Dim(_, 0):
+                    pass
+
+                case Dim(1, 1):
+                    yield Span(Vec(0, 0), "·")
+
+                case Dim(w, 1):
+                    yield Span(Vec(0, 0), "─" * w)
+
+                case Dim(1, h):
+                    for dy in range(h):
+                        yield Span(Vec(0, dy), "│")
+
+                case Dim(w, h):
+                    yield Span(Vec(0, 0), "".join(["┌", "─" * (w - 2), "┐"]))
+                    for dy in range(1, h - 1):
+                        yield Span(Vec(0, dy), "│")
+                        yield Span(Vec(w - 1, dy), "│")
+                    yield Span(Vec(0, h - 1), "".join(["└", "─" * (w - 2), "┘"]))
+
         for thing in self.contents:
             for span in thing.render(render_table):
                 # todo: clip
@@ -136,71 +156,14 @@ class Term:
         f()
 
 
-class Border(Renderable):
-    def __init__(self, block: Block):
-        self.box: Box = block.box
-        # todo: already failing separating layout and content
-        self.block: Block = Block(
-            Box(Vec(0, 0), Dim(self.box.dim.w - 2, self.box.dim.h - 2))
-        )
-
-        self.spans: list[Span] = []
-        match self.box.dim:
-            case Dim(0, _) | Dim(_, 0):
-                pass
-
-            case Dim(1, 1):
-                self.spans.append(Span(Vec(0, 0), "·"))
-
-            case Dim(w, 1):
-                self.spans.append(Span(Vec(0, 0), "─" * w))
-
-            case Dim(1, h):
-                for dy in range(h):
-                    self.spans.append(Span(self.box.pos + Vec(0, dy), "│"))
-
-            case Dim(w, h):
-                self.spans.append(
-                    Span(
-                        self.box.pos,
-                        "".join(["┌", "─" * (w - 2), "┐"]),
-                    )
-                )
-                for dy in range(1, h - 1):
-                    self.spans.append(Span(self.box.pos + Vec(0, dy), "│"))
-                    self.spans.append(Span(self.box.pos + Vec(w - 1, dy), "│"))
-                self.spans.append(
-                    Span(
-                        self.box.pos + Vec(0, h - 1),
-                        "".join(["└", "─" * (w - 2), "┘"]),
-                    )
-                )
-
-    @override
-    def render(self, render_table: RenderTable) -> Iterator[Span]:
-        yield from self.spans
-        for span in self.block.render(render_table):
-            yield span + Vec(1, 1)
-
-
 class Text(Renderable):
     def __init__(self, text: str | Ref[str]):
+        super().__init__()
         self.text: Ref[str] = Ref.of(text)
 
     @override
-    def render(self, render_table: RenderTable) -> Iterator[Span]:
-        yield Span(Vec(0, 0), self.text.value)
-
-
-class Thing(Renderable):
-    def __init__(self, dim: Dim):
-        super().__init__()
-        self.dim: Dim = dim
-        self.color: Color = Color.hsl(random(), 1, 0.7)
-
-    @override
     def size(self, render_table: RenderTable):
-        render_table[self].dim = self.dim
+        render_table[self].dim = Dim(len(self.text.value), 1)
 
     @override
     def place(self, render_table: RenderTable):
@@ -208,5 +171,4 @@ class Thing(Renderable):
 
     @override
     def render(self, render_table: RenderTable) -> Iterator[Span]:
-        for dy in range(self.dim.h):
-            yield Span(Vec(0, dy), " " * self.dim.w, self.color)
+        yield Span(Vec(0, 0), self.text.value)

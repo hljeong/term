@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import ClassVar, Iterator, TypeAlias
 
-from term import Vec
+from term import Span, Vec
 
 
 class Direction(Enum):
@@ -71,22 +71,6 @@ class Layout:
     direction: Direction = Direction.HORIZONTAL
     padding: Padding = field(default_factory=Padding)
     gap: int = 0
-
-    # def apply(self, contents: Iterable[Renderable]) -> Iterator[tuple[Renderable, Vec]]:
-    def apply(self, contents):
-        pos: Vec = Vec(self.padding.left, self.padding.top)
-        match self.direction:
-            case Direction.HORIZONTAL:
-                for thing in contents:
-                    yield thing, LayoutInfo(pos=pos)
-                    # todo: .dim is not guaranteed to exist
-                    pos += Vec(thing.dim.w + self.gap, 0)
-
-            case Direction.VERTICAL:
-                for thing in contents:
-                    yield thing, LayoutInfo(pos=pos)
-                    # todo: .dim is not guaranteed to exist
-                    pos += Vec(0, thing.dim.h + self.gap)
 
     # todo: type annotation
     def size(self, contents, render_table) -> Dim:

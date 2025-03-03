@@ -4,7 +4,7 @@ from layout import Padding
 from loop import L
 from ref import Ref, RefFunc
 from term import go, lorem
-from term2 import Block, Border, Color, Dim, Direction, Term, Text, Thing
+from term2 import Block, Color, Dim, Direction, Term, Text
 
 
 def main():
@@ -13,30 +13,18 @@ def main():
 
     t: Term = Term()
 
-    # b: Border = Border(t.block)
-    # # todo: this sucks
-    # t.block += b
-    # top: Block
-    # bottom: Block
-    # top, bottom = b.block.split(direction=Direction.VERTICAL)
-    #
-    # seconds: Ref[float] = Ref(getter=lambda: L.state.t)
-    # text: Ref[str] = RefFunc(lambda seconds: format(seconds, ".2f"))(seconds)
-    # top.add(Text(text))
-    #
-    # text2: Ref[str] = Ref(lorem[:20])
-    # L.interval(lambda: text2.set_value(text2.value[:-1]), seconds=1, after=1)
-    # bottom.add(Text(text2))
-
     t.block.layout.direction = Direction.VERTICAL
     t.block.layout.padding = Padding(1, 2)
-    t.block.layout.gap = 2
+    t.block.layout.gap = 1
+    t.block.border = True
 
-    thing1: Thing = Thing(Dim(20, 10))
-    t.block.add(thing1)
+    seconds: Ref[float] = Ref(getter=lambda: L.state.t)
+    text: Ref[str] = RefFunc(lambda seconds: format(seconds, ".2f"))(seconds)
+    t.block.add(Text(text))
 
-    thing2: Thing = Thing(Dim(10, 10))
-    t.block.add(thing2)
+    text2: Ref[str] = Ref(lorem[:20])
+    L.interval(lambda: text2.set_value(text2.value[:-1]), seconds=1, after=1)
+    t.block.add(Block(Text(text2), border=True))
 
     # hue1: float = random()
     # hue2: float = random()

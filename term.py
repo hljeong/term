@@ -421,33 +421,33 @@ def go():
         teardown()
 
 
-with go():
-    # buf = Buffer()
-    # s = choices(string.ascii_lowercase, k=H * W)
-    # for i in range(5000):
-    #     # buf.add(
-    #     #     i * 6,
-    #     #     0,
-    #     #     Span(Vec(i * 6, 0), "lorem ipsum dolor sit amet", Span.Style(fg=YELLOW)),
-    #     # )
-    #     for x in range(W):
-    #         for y in range(H):
-    #             buf.add(
-    #                 x,
-    #                 y,
-    #                 Span(
-    #                     Vec(x, y),
-    #                     s[(x + y + i) % (H * W)],
-    #                     Span.Style(fg=GREEN, bg=DARK_GRAY),
-    #                 ),
-    #             )
-    #     buf.draw()
-    # sleep(1)
-
-    s = Screen()
-    b = Block(Rect(Vec(0, 0), Vec(20, 10)), title=lorem[:20])
-    b.add(Label(Rect(Vec(0, 0), Vec(20, 1)), "first item"))
-    b.add(Label(Rect(Vec(-3, 1), Vec(20, 1)), "second item"))
-    b.add(Label(Rect(Vec(0, 2), Vec(20, 1)), "third item"))
-    s.box.add(b)
-    # s.draw()
+# with go():
+#     # buf = Buffer()
+#     # s = choices(string.ascii_lowercase, k=H * W)
+#     # for i in range(5000):
+#     #     # buf.add(
+#     #     #     i * 6,
+#     #     #     0,
+#     #     #     Span(Vec(i * 6, 0), "lorem ipsum dolor sit amet", Span.Style(fg=YELLOW)),
+#     #     # )
+#     #     for x in range(W):
+#     #         for y in range(H):
+#     #             buf.add(
+#     #                 x,
+#     #                 y,
+#     #                 Span(
+#     #                     Vec(x, y),
+#     #                     s[(x + y + i) % (H * W)],
+#     #                     Span.Style(fg=GREEN, bg=DARK_GRAY),
+#     #                 ),
+#     #             )
+#     #     buf.draw()
+#     # sleep(1)
+#
+#     s = Screen()
+#     b = Block(Rect(Vec(0, 0), Vec(20, 10)), title=lorem[:20])
+#     b.add(Label(Rect(Vec(0, 0), Vec(20, 1)), "first item"))
+#     b.add(Label(Rect(Vec(-3, 1), Vec(20, 1)), "second item"))
+#     b.add(Label(Rect(Vec(0, 2), Vec(20, 1)), "third item"))
+#     s.box.add(b)
+#     # s.draw()
