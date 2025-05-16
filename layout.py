@@ -26,9 +26,9 @@ class Dim:
         yield self.h
 
 
+@dataclass
 class Fixed:
-    def __init__(self, value: int):
-        self.value: int = value
+    value: int
 
 
 class Fit:
@@ -75,25 +75,46 @@ class Layout:
     # todo: type annotation
     def size(self, contents, render_table) -> Dim:
         dim: Dim = Dim(0, 0)
-        match self.direction:
-            case Direction.Horizontal:
-                for thing in contents:
-                    w, h = render_table[thing].dim
-                    dim.w += w
-                    dim.h = max(dim.h, h)
+        match self.sizing.w:
+            case Fixed(value):
+                dim.w = value
 
-                dim.w += max(0, len(contents) - 1) * self.gap
+            case Fit():
+                match self.direction:
+                    case Direction.Horizontal:
+                        for thing in contents:
+                            w, _ = render_table[thing].dim
+                            dim.w += w
 
-            case Direction.Vertical:
-                for thing in contents:
-                    w, h = render_table[thing].dim
-                    dim.h += h
-                    dim.w = max(dim.w, w)
+                        dim.w += max(0, len(contents) - 1) * self.gap
 
-                dim.h += max(0, len(contents) - 1) * self.gap
+                    case Direction.Vertical:
+                        for thing in contents:
+                            w, _ = render_table[thing].dim
+                            dim.w = max(dim.w, w)
 
-        dim.w += self.padding.left + self.padding.right
-        dim.h += self.padding.top + self.padding.bottom
+                dim.w += self.padding.left + self.padding.right
+
+        match self.sizing.h:
+            case Fixed(value):
+                dim.h = value
+
+            case Fit():
+                match self.direction:
+                    case Direction.Horizontal:
+                        for thing in contents:
+                            _, h = render_table[thing].dim
+                            dim.h = max(dim.h, h)
+
+                    case Direction.Vertical:
+                        for thing in contents:
+                            _, h = render_table[thing].dim
+                            dim.h += h
+
+                        dim.h += max(0, len(contents) - 1) * self.gap
+
+                dim.h += self.padding.top + self.padding.bottom
+
         return dim
 
     # todo: type annotation

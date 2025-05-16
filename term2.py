@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from contextlib import contextmanager
-from dataclasses import dataclass, field
 from color import Color
+from contextlib import contextmanager
+from copy import deepcopy
+from dataclasses import dataclass, field
 from layout import Box, Dim, Direction, Fixed, Layout, LayoutInfo, Sizing
+import os
 from random import random
 import re
 from types import TracebackType
@@ -99,11 +101,17 @@ class Block(Renderable):
     def size(self, render_table: RenderTable):
         for thing in self:
             thing.size(render_table)
+        proxy_layout: Layout = deepcopy(self.layout)
+        if self.border:
+            proxy_layout.padding.top += 1
+            proxy_layout.padding.right += 1
+            proxy_layout.padding.bottom += 1
+            proxy_layout.padding.left += 1
         render_table[self].dim = self.layout.size(self.contents, render_table)
 
-        if self.border:
-            render_table[self].dim.w += 2
-            render_table[self].dim.h += 2
+        # if self.border:
+        #     render_table[self].dim.w += 2
+        #     render_table[self].dim.h += 2
 
     @override
     def place(self, render_table: RenderTable):
@@ -220,6 +228,8 @@ class Term:
     def render(self):
         w("\x1b[2J")
         render_table = RenderTable()
+        D = os.get_terminal_size()
+        self.block.layout.sizing = Sizing(Fixed(D.columns), Fixed(D.lines))
         self.block.size(render_table)
         self.block.place(render_table)
         for span in self.block.render(render_table):

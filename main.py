@@ -10,7 +10,7 @@ from term2 import Block, Color, Dim, Direction, Layout, Term, Text
 
 def main():
     N = 5
-    T = 10
+    T = 100
     L.after(L.stop, seconds=N)
 
     class Status(Enum):
