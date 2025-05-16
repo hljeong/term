@@ -222,7 +222,7 @@ class Span(Renderable):
 
     pos: Vec
     text: str
-    style: Style = Style()
+    style: Style = field(default_factory=Style)
 
     def __str__(self) -> str:
         comps: list[str] = [f"{self.text}", str(self.style)]

@@ -37,8 +37,8 @@ class Fit:
 
 @dataclass
 class Sizing:
-    w: Fixed | Fit = Fit()
-    h: Fixed | Fit = Fit()
+    w: Fixed | Fit = field(default_factory=Fit)
+    h: Fixed | Fit = field(default_factory=Fit)
 
 
 @dataclass
@@ -67,7 +67,7 @@ class LayoutInfo:
 
 @dataclass
 class Layout:
-    sizing: Sizing = Sizing(Fit(), Fit())
+    sizing: Sizing = field(default_factory=lambda: Sizing(Fit(), Fit()))
     direction: Direction = Direction.HORIZONTAL
     padding: Padding = field(default_factory=Padding)
     gap: int = 0
