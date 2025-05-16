@@ -5,7 +5,7 @@ from color import Color
 from contextlib import contextmanager
 from copy import deepcopy
 from dataclasses import dataclass, field
-from layout import Box, Dim, Direction, Fixed, Layout, LayoutInfo, Sizing
+from layout import Box, Dim, Direction, Fixed, Layout, LayoutInfo, Padding, Sizing
 import os
 from random import random
 import re
@@ -80,7 +80,7 @@ class Span:
 
 class Block(Renderable):
     def __init__(
-        self, *contents: Renderable, layout: Layout | None = None, border=False
+        self, *contents: Renderable, layout: Layout | None = None, border: bool = False
     ):
         super().__init__()
         self.layout: Layout = layout or Layout()
@@ -107,7 +107,7 @@ class Block(Renderable):
             proxy_layout.padding.right += 1
             proxy_layout.padding.bottom += 1
             proxy_layout.padding.left += 1
-        render_table[self].dim = self.layout.size(self.contents, render_table)
+        render_table[self].dim = proxy_layout.size(self.contents, render_table)
 
         # if self.border:
         #     render_table[self].dim.w += 2
@@ -117,14 +117,22 @@ class Block(Renderable):
     def place(self, render_table: RenderTable):
         for thing in self:
             thing.place(render_table)
-        self.layout.place(self.contents, render_table)
-
+        proxy_layout: Layout = deepcopy(self.layout)
         if self.border:
-            for thing in self:
-                render_table[thing].pos += Vec(1, 1)
+            proxy_layout.padding.top += 1
+            proxy_layout.padding.right += 1
+            proxy_layout.padding.bottom += 1
+            proxy_layout.padding.left += 1
+        proxy_layout.place(self.contents, render_table)
+
+        # if self.border:
+        #     for thing in self:
+        #         render_table[thing].pos += Vec(1, 1)
 
     @override
     def render(self, render_table: RenderTable) -> Iterator[Span]:
+        proxy_padding: Padding = deepcopy(self.layout.padding)
+
         if self.border:
             match render_table[self].dim:
                 case Dim(0, _) | Dim(_, 0):
@@ -147,61 +155,46 @@ class Block(Renderable):
                         yield Span(Vec(w - 1, dy), "│")
                     yield Span(Vec(0, h - 1), "".join(["└", "─" * (w - 2), "┘"]))
 
+            proxy_padding.top += 1
+            proxy_padding.right += 1
+            proxy_padding.bottom += 1
+            proxy_padding.left += 1
+
         for thing in self.contents:
             for span in thing.render(render_table):
                 span += render_table[thing].pos
 
                 # clip
                 # todo: this is incredibly disgusting
-                if self.border:
-                    if span.pos.x >= render_table[self].dim.w - 1:
-                        continue
+                if span.pos.x >= render_table[self].dim.w - proxy_padding.right:
+                    continue
 
-                    if span.pos.y >= render_table[self].dim.h - 1:
-                        continue
+                if span.pos.y >= render_table[self].dim.h - proxy_padding.bottom:
+                    continue
 
-                    if span.pos.y < 1:
-                        continue
+                if span.pos.y < proxy_padding.top:
+                    continue
 
-                    if span.pos.x <= 1 - len(span.text):
-                        continue
+                if span.pos.x <= proxy_padding.left - len(span.text):
+                    continue
 
-                    if span.pos.x < 1:
-                        yield Span(
-                            Vec(1, span.pos.y), span.text[1 - span.pos.x :], span.style
-                        )
-
-                    else:
-                        yield Span(
-                            span.pos,
-                            span.text[: render_table[self].dim.w - 1 - span.pos.x],
-                            span.style,
-                        )
+                if span.pos.x < proxy_padding.left:
+                    yield Span(
+                        Vec(0, span.pos.y),
+                        span.text[proxy_padding.left - span.pos.x :],
+                        span.style,
+                    )
 
                 else:
-                    if span.pos.x >= render_table[self].dim.w:
-                        continue
-
-                    if span.pos.y >= render_table[self].dim.h:
-                        continue
-
-                    if span.pos.y < 0:
-                        continue
-
-                    if span.pos.x <= -len(span.text):
-                        continue
-
-                    if span.pos.x < 0:
-                        yield Span(
-                            Vec(0, span.pos.y), span.text[-span.pos.x :], span.style
-                        )
-
-                    else:
-                        yield Span(
-                            span.pos,
-                            span.text[: render_table[self].dim.w - span.pos.x],
-                            span.style,
-                        )
+                    yield Span(
+                        span.pos,
+                        span.text[
+                            : render_table[self].dim.w
+                            - proxy_padding.right
+                            - span.pos.x
+                        ],
+                        span.style,
+                    )
 
 
 class Term:

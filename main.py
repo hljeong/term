@@ -9,8 +9,8 @@ from term2 import Block, Color, Dim, Direction, Layout, Term, Text
 
 
 def main():
-    N = 5
-    T = 100
+    N = 10
+    T = 99
     L.after(L.stop, seconds=N)
 
     class Status(Enum):
@@ -65,8 +65,7 @@ def main():
         layout=Layout(
             # direction=Direction.VERTICAL,
             direction=Direction.Horizontal,
-            # padding=Padding(1, 2),
-            # gap=1,
+            padding=Padding(1, 2),
         ),
         border=True,
     )
@@ -81,11 +80,11 @@ def main():
     # with t(Block(border=False)):
     #     t(Text(text2))
 
-    with t(Block(layout=Layout(direction=Direction.Vertical))):
+    with t(Block(layout=Layout(direction=Direction.Vertical, gap=1))):
         for idx in range(T):
             t(Text(f"{idx + 1}: "))
 
-    with t(Block(layout=Layout(direction=Direction.Vertical))):
+    with t(Block(layout=Layout(direction=Direction.Vertical, gap=1))):
         for idx in range(T):
             t(Text(Ref(getter=(lambda idx_: lambda: format(tasks[idx_], "c"))(idx))))
 
