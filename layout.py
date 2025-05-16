@@ -8,8 +8,8 @@ from term import Span, Vec
 
 
 class Direction(Enum):
-    HORIZONTAL = "horizontal"
-    VERTICAL = "vertical"
+    Horizontal = "horizontal"
+    Vertical = "vertical"
 
 
 @dataclass
@@ -68,7 +68,7 @@ class LayoutInfo:
 @dataclass
 class Layout:
     sizing: Sizing = field(default_factory=lambda: Sizing(Fit(), Fit()))
-    direction: Direction = Direction.HORIZONTAL
+    direction: Direction = Direction.Horizontal
     padding: Padding = field(default_factory=Padding)
     gap: int = 0
 
@@ -76,7 +76,7 @@ class Layout:
     def size(self, contents, render_table) -> Dim:
         dim: Dim = Dim(0, 0)
         match self.direction:
-            case Direction.HORIZONTAL:
+            case Direction.Horizontal:
                 for thing in contents:
                     w, h = render_table[thing].dim
                     dim.w += w
@@ -84,10 +84,10 @@ class Layout:
 
                 dim.w += max(0, len(contents) - 1) * self.gap
 
-            case Direction.VERTICAL:
+            case Direction.Vertical:
                 for thing in contents:
                     w, h = render_table[thing].dim
-                    dim.h += render_table[thing].dim.h
+                    dim.h += h
                     dim.w = max(dim.w, w)
 
                 dim.h += max(0, len(contents) - 1) * self.gap
@@ -101,12 +101,12 @@ class Layout:
     def place(self, contents, render_table):
         pos: Vec = Vec(self.padding.left, self.padding.top)
         match self.direction:
-            case Direction.HORIZONTAL:
+            case Direction.Horizontal:
                 for thing in contents:
                     render_table[thing].pos = pos
                     pos += Vec(render_table[thing].dim.w + self.gap, 0)
 
-            case Direction.VERTICAL:
+            case Direction.Vertical:
                 for thing in contents:
                     render_table[thing].pos = pos
                     pos += Vec(0, render_table[thing].dim.h + self.gap)
@@ -121,13 +121,13 @@ class Box:
         self,
         *,
         n: int = 2,
-        direction: Direction = Direction.HORIZONTAL,
+        direction: Direction = Direction.Horizontal,
     ) -> Iterator[Box]:
         if n < 2:
             raise ValueError(f"n must >= 2, got: {n}")
 
         match direction:
-            case Direction.HORIZONTAL:
+            case Direction.Horizontal:
                 w: int
                 n_wide: int
                 w, n_wide = divmod(self.dim.w, n)
@@ -137,7 +137,7 @@ class Box:
                     yield box
                     next_pos += Vec(box.dim.w, 0)
 
-            case Direction.VERTICAL:
+            case Direction.Vertical:
                 h: int
                 n_tall: int
                 h, n_tall = divmod(self.dim.h, n)
